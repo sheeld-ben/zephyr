@@ -28,8 +28,8 @@
  */
 static void gpio_stm32_isr(int line, void *arg)
 {
-	struct device *dev = arg;
-	struct gpio_stm32_data *data = dev->driver_data;
+	struct device *dev = (struct device *)arg;
+	struct gpio_stm32_data *data = (struct gpio_stm32_data *)dev->driver_data;
 
 	if ((BIT(line) & data->cb_pins) != 0) {
 		gpio_fire_callbacks(&data->cb, dev, BIT(line));
@@ -50,6 +50,11 @@ const int gpio_stm32_flags_to_conf(int flags, int *pincfg)
 
 	if (direction == GPIO_DIR_OUT) {
 		*pincfg = STM32_PINCFG_MODE_OUTPUT;
+		if (pud == GPIO_PUD_OPEN_DRAIN) {
+			*pincfg |= STM32_PINCFG_OPEN_DRAIN;
+		} else {
+			*pincfg |= STM32_PINCFG_PUSH_PULL;
+		}
 	} else {
 		/* pull-{up,down} maybe? */
 		*pincfg = STM32_PINCFG_MODE_INPUT;
@@ -232,7 +237,7 @@ const int gpio_stm32_enable_int(int port, int pin)
 static int gpio_stm32_config(struct device *dev, int access_op,
 			     u32_t pin, int flags)
 {
-	const struct gpio_stm32_config *cfg = dev->config->config_info;
+	const struct gpio_stm32_config *cfg = (const struct gpio_stm32_config *)dev->config->config_info;
 	int pincfg;
 	int map_res;
 
@@ -299,7 +304,7 @@ static int gpio_stm32_config(struct device *dev, int access_op,
 static int gpio_stm32_write(struct device *dev, int access_op,
 			    u32_t pin, u32_t value)
 {
-	const struct gpio_stm32_config *cfg = dev->config->config_info;
+	const struct gpio_stm32_config *cfg = (const struct gpio_stm32_config *)dev->config->config_info;
 	GPIO_TypeDef *gpio = (GPIO_TypeDef *)cfg->base;
 
 	if (access_op != GPIO_ACCESS_BY_PIN) {
@@ -322,7 +327,7 @@ static int gpio_stm32_write(struct device *dev, int access_op,
 static int gpio_stm32_read(struct device *dev, int access_op,
 			   u32_t pin, u32_t *value)
 {
-	const struct gpio_stm32_config *cfg = dev->config->config_info;
+	const struct gpio_stm32_config *cfg = (const struct gpio_stm32_config *)dev->config->config_info;
 	GPIO_TypeDef *gpio = (GPIO_TypeDef *)cfg->base;
 
 	if (access_op != GPIO_ACCESS_BY_PIN) {
@@ -338,7 +343,7 @@ static int gpio_stm32_manage_callback(struct device *dev,
 				      struct gpio_callback *callback,
 				      bool set)
 {
-	struct gpio_stm32_data *data = dev->driver_data;
+	struct gpio_stm32_data *data = (struct gpio_stm32_data *)dev->driver_data;
 
 	return gpio_manage_callback(&data->cb, callback, set);
 }
@@ -346,7 +351,7 @@ static int gpio_stm32_manage_callback(struct device *dev,
 static int gpio_stm32_enable_callback(struct device *dev,
 				      int access_op, u32_t pin)
 {
-	struct gpio_stm32_data *data = dev->driver_data;
+	struct gpio_stm32_data *data = (struct gpio_stm32_data *)dev->driver_data;
 
 	if (access_op != GPIO_ACCESS_BY_PIN) {
 		return -ENOTSUP;
@@ -360,7 +365,7 @@ static int gpio_stm32_enable_callback(struct device *dev,
 static int gpio_stm32_disable_callback(struct device *dev,
 				       int access_op, u32_t pin)
 {
-	struct gpio_stm32_data *data = dev->driver_data;
+	struct gpio_stm32_data *data = (struct gpio_stm32_data *)dev->driver_data;
 
 	if (access_op != GPIO_ACCESS_BY_PIN) {
 		return -ENOTSUP;
@@ -393,7 +398,7 @@ static const struct gpio_driver_api gpio_stm32_driver = {
  */
 static int gpio_stm32_init(struct device *device)
 {
-	const struct gpio_stm32_config *cfg = device->config->config_info;
+	const struct gpio_stm32_config *cfg = (const struct gpio_stm32_config *)device->config->config_info;
 
 	/* enable clock for subsystem */
 	struct device *clk =
