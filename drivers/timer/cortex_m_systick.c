@@ -109,6 +109,7 @@ int z_clock_driver_init(struct device *device)
 {
 #if defined(CONFIG_TIMER_READS_ITS_FREQUENCY_AT_RUNTIME)
 	SystemCoreClockUpdate();
+	z_clock_hw_cycles_per_sec = SystemCoreClock;
 #endif
 
 	NVIC_SetPriority(SysTick_IRQn, _IRQ_PRIO_OFFSET);
@@ -168,6 +169,7 @@ void z_clock_update(void)
 
 	cycle_count += elapsed();
 	SystemCoreClockUpdate();
+	z_clock_hw_cycles_per_sec = SystemCoreClock;
 
 	last_load = CYC_PER_TICK - 1;
 
