@@ -933,3 +933,167 @@ NET_DEVICE_INIT(socket_can_stm32_1, SOCKET_CAN_NAME_1, socket_can_init_1,
 #endif /* CONFIG_NET_SOCKETS_CAN */
 
 #endif /*CONFIG_CAN_1*/
+
+#ifdef CONFIG_CAN_2
+
+static void config_can_2_irq(CAN_TypeDef *can);
+
+static const struct can_stm32_config can_stm32_cfg_2 = {
+	.can = (CAN_TypeDef *)DT_CAN_2_BASE_ADDRESS,
+	.bus_speed = DT_CAN_2_BUS_SPEED,
+	.sjw = DT_CAN_2_SJW,
+	.prop_bs1 = DT_CAN_2_PROP_SEG_PHASE_SEG1,
+	.bs2 = DT_CAN_2_PHASE_SEG2,
+	.pclken = {
+		.enr = DT_CAN_2_CLOCK_BITS,
+		.bus = DT_CAN_2_CLOCK_BUS,
+	},
+	.config_irq = config_can_2_irq
+};
+
+static struct can_stm32_data can_stm32_dev_data_2;
+
+DEVICE_AND_API_INIT(can_stm32_2, DT_CAN_2_NAME, &can_stm32_init,
+		    &can_stm32_dev_data_2, &can_stm32_cfg_2,
+		    POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEVICE,
+		    &can_api_funcs);
+
+static void config_can_2_irq(CAN_TypeDef *can)
+{
+	LOG_DBG("Enable CAN2 IRQ");
+#ifdef CONFIG_SOC_SERIES_STM32F0X
+	IRQ_CONNECT(DT_CAN_2_IRQ, DT_CAN_2_IRQ_PRIORITY, can_stm32_isr,
+		    DEVICE_GET(can_stm32_2), 0);
+	irq_enable(DT_CAN_2_IRQ);
+#else
+	IRQ_CONNECT(DT_CAN_2_IRQ_RX0, DT_CAN_2_IRQ_PRIORITY,
+		    can_stm32_rx_isr, DEVICE_GET(can_stm32_2), 0);
+	irq_enable(DT_CAN_2_IRQ_RX0);
+
+	IRQ_CONNECT(DT_CAN_2_IRQ_TX, DT_CAN_2_IRQ_PRIORITY,
+		    can_stm32_tx_isr, DEVICE_GET(can_stm32_2), 0);
+	irq_enable(DT_CAN_2_IRQ_TX);
+
+	IRQ_CONNECT(DT_CAN_2_IRQ_SCE, DT_CAN_2_IRQ_PRIORITY,
+		    can_stm32_tx_isr, DEVICE_GET(can_stm32_2), 0);
+	irq_enable(DT_CAN_2_IRQ_SCE);
+#endif
+	can->IER |= CAN_IT_TME | CAN_IT_ERR | CAN_IT_FMP0 | CAN_IT_FMP1;
+}
+
+#if defined(CONFIG_NET_SOCKETS_CAN)
+
+#include "socket_can_generic.h"
+
+static int socket_can_init_2(struct device *dev)
+{
+	struct device *can_dev = DEVICE_GET(can_stm32_2);
+	struct socket_can_context *socket_context = dev->driver_data;
+
+	LOG_DBG("Init socket CAN device %p (%s) for dev %p (%s)",
+		dev, dev->config->name, can_dev, can_dev->config->name);
+
+	socket_context->can_dev = can_dev;
+	socket_context->msgq = &socket_can_msgq;
+
+	socket_context->rx_tid =
+		k_thread_create(&socket_context->rx_thread_data,
+				rx_thread_stack,
+				K_THREAD_STACK_SIZEOF(rx_thread_stack),
+				rx_thread, socket_context, NULL, NULL,
+				RX_THREAD_PRIORITY, 0, K_NO_WAIT);
+
+	return 0;
+}
+
+NET_DEVICE_INIT(socket_can_stm32_2, SOCKET_CAN_NAME_2, socket_can_init_2,
+		&socket_can_context_1, NULL,
+		CONFIG_KERNEL_INIT_PRIORITY_DEVICE,
+		&socket_can_api,
+		CANBUS_L2, NET_L2_GET_CTX_TYPE(CANBUS_L2), CAN_MTU);
+
+#endif /* CONFIG_NET_SOCKETS_CAN */
+
+#endif /*CONFIG_CAN_2*/
+
+#ifdef CONFIG_CAN_3
+
+static void config_can_3_irq(CAN_TypeDef *can);
+
+static const struct can_stm32_config can_stm32_cfg_3 = {
+	.can = (CAN_TypeDef *)DT_CAN_3_BASE_ADDRESS,
+	.bus_speed = DT_CAN_3_BUS_SPEED,
+	.sjw = DT_CAN_3_SJW,
+	.prop_bs1 = DT_CAN_3_PROP_SEG_PHASE_SEG1,
+	.bs2 = DT_CAN_3_PHASE_SEG2,
+	.pclken = {
+		.enr = DT_CAN_3_CLOCK_BITS,
+		.bus = DT_CAN_3_CLOCK_BUS,
+	},
+	.config_irq = config_can_3_irq
+};
+
+static struct can_stm32_data can_stm32_dev_data_3;
+
+DEVICE_AND_API_INIT(can_stm32_3, DT_CAN_3_NAME, &can_stm32_init,
+		    &can_stm32_dev_data_3, &can_stm32_cfg_3,
+		    POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEVICE,
+		    &can_api_funcs);
+
+static void config_can_3_irq(CAN_TypeDef *can)
+{
+	LOG_DBG("Enable CAN3 IRQ");
+#ifdef CONFIG_SOC_SERIES_STM32F0X
+	IRQ_CONNECT(DT_CAN_3_IRQ, DT_CAN_3_IRQ_PRIORITY, can_stm32_isr,
+		    DEVICE_GET(can_stm32_3), 0);
+	irq_enable(DT_CAN_3_IRQ);
+#else
+	IRQ_CONNECT(DT_CAN_3_IRQ_RX0, DT_CAN_3_IRQ_PRIORITY,
+		    can_stm32_rx_isr, DEVICE_GET(can_stm32_3), 0);
+	irq_enable(DT_CAN_3_IRQ_RX0);
+
+	IRQ_CONNECT(DT_CAN_3_IRQ_TX, DT_CAN_3_IRQ_PRIORITY,
+		    can_stm32_tx_isr, DEVICE_GET(can_stm32_3), 0);
+	irq_enable(DT_CAN_3_IRQ_TX);
+
+	IRQ_CONNECT(DT_CAN_3_IRQ_SCE, DT_CAN_3_IRQ_PRIORITY,
+		    can_stm32_tx_isr, DEVICE_GET(can_stm32_3), 0);
+	irq_enable(DT_CAN_3_IRQ_SCE);
+#endif
+	can->IER |= CAN_IT_TME | CAN_IT_ERR | CAN_IT_FMP0 | CAN_IT_FMP1;
+}
+
+#if defined(CONFIG_NET_SOCKETS_CAN)
+
+#include "socket_can_generic.h"
+
+static int socket_can_init_3(struct device *dev)
+{
+	struct device *can_dev = DEVICE_GET(can_stm32_3);
+	struct socket_can_context *socket_context = dev->driver_data;
+
+	LOG_DBG("Init socket CAN device %p (%s) for dev %p (%s)",
+		dev, dev->config->name, can_dev, can_dev->config->name);
+
+	socket_context->can_dev = can_dev;
+	socket_context->msgq = &socket_can_msgq;
+
+	socket_context->rx_tid =
+		k_thread_create(&socket_context->rx_thread_data,
+				rx_thread_stack,
+				K_THREAD_STACK_SIZEOF(rx_thread_stack),
+				rx_thread, socket_context, NULL, NULL,
+				RX_THREAD_PRIORITY, 0, K_NO_WAIT);
+
+	return 0;
+}
+
+NET_DEVICE_INIT(socket_can_stm32_3, SOCKET_CAN_NAME_3, socket_can_init_3,
+		&socket_can_context_1, NULL,
+		CONFIG_KERNEL_INIT_PRIORITY_DEVICE,
+		&socket_can_api,
+		CANBUS_L2, NET_L2_GET_CTX_TYPE(CANBUS_L2), CAN_MTU);
+
+#endif /* CONFIG_NET_SOCKETS_CAN */
+
+#endif /*CONFIG_CAN_3*/
