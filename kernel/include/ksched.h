@@ -12,6 +12,10 @@
 #include <tracing.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 BUILD_ASSERT(K_LOWEST_APPLICATION_THREAD_PRIO
 	     >= K_HIGHEST_APPLICATION_THREAD_PRIO);
 
@@ -296,5 +300,9 @@ static inline struct k_thread *z_unpend1_no_timeout(_wait_q_t *wait_q)
 
 	return thread;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZEPHYR_KERNEL_INCLUDE_KSCHED_H_ */
