@@ -407,7 +407,7 @@ int can_stm32_send(struct device *dev, const struct zcan_frame *msg,
 	k_mutex_unlock(tx_mutex);
 
 	if (callback == NULL) {
-		k_sem_take(&mb->tx_int_sem, K_FOREVER);
+		k_sem_take(&mb->tx_int_sem, timeout);
 		return mb->error_flags;
 	}
 
