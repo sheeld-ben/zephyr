@@ -15,6 +15,10 @@
 #include <pinmux/stm32/pinmux_stm32.h>
 #include <gpio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* GPIO buses definitions */
 
 #define STM32_PORT_NOT_AVAILABLE 0xFFFFFFFF
@@ -150,5 +154,9 @@ struct gpio_stm32_data {
  * @param altf Alternate function
  */
 int gpio_stm32_configure(u32_t *base_addr, int pin, int conf, int altf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZEPHYR_DRIVERS_GPIO_GPIO_STM32_H_ */
