@@ -71,7 +71,7 @@ LOG_MODULE_REGISTER(sdhc, CONFIG_DISK_LOG_LEVEL);
 /* Clock speed used during initialisation */
 #define SDHC_INITIAL_SPEED 400000
 /* Clock speed used after initialisation */
-#define SDHC_SPEED 4000000
+#define SDHC_SPEED 24000000
 
 #define SDHC_MIN_TRIES 20
 #define SDHC_RETRY_DELAY K_MSEC(20)
