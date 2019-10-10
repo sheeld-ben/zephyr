@@ -29,4 +29,10 @@ properties:
       category: optional
       description: Set to enable RTS/CTS flow control at boot time
       generation: define
+
+    dma-channels:
+      type: array
+      category: optional
+      description: DMA config (slot tx, stream tx, slot rx, stream rx) for USART
+      generation: define
 ...

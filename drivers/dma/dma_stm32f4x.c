@@ -324,6 +324,10 @@ static int dma_stm32_config_devcpy(struct device *dev, u32_t id,
 		return -EINVAL;
 	}
 
+	if (config->buf_cfg == DMA_BUF_CFG_CIRCULAR) {
+		regs->scr |= DMA_STM32_SCR_CIRC;
+	}
+
 	if (src_burst_size == BURST_TRANS_LENGTH_1 &&
 	    dst_burst_size == BURST_TRANS_LENGTH_1) {
 		/* Enable 'direct' mode error IRQ, disable 'FIFO' error IRQ */
@@ -357,6 +361,10 @@ static int dma_stm32_config_memcpy(struct device *dev, u32_t id,
 		DMA_STM32_SCR_PINC |		/* Peripheral increment mode */
 		DMA_STM32_SCR_TCIE |		/* Transfer comp IRQ enable */
 		DMA_STM32_SCR_TEIE;		/* Transfer error IRQ enable */
+
+	if (config->buf_cfg == DMA_BUF_CFG_CIRCULAR) {
+		regs->scr |= DMA_STM32_SCR_CIRC;
+	}
 
 	regs->sfcr = DMA_STM32_SFCR_DMDIS |	/* Direct mode disable */
 		DMA_STM32_SFCR_FTH(DMA_STM32_FIFO_THRESHOLD_FULL) |
@@ -508,8 +516,9 @@ static int dma_stm32_stop(struct device *dev, u32_t id)
 
 	/* Disable stream */
 	ret = dma_stm32_disable_stream(ddata, id);
-	if (ret)
+	if (ret) {
 		return ret;
+	}
 
 	/* Clear remanent IRQs from previous transfers */
 	irqstatus = dma_stm32_irq_status(ddata, id);
@@ -519,6 +528,22 @@ static int dma_stm32_stop(struct device *dev, u32_t id)
 
 	/* Finally, flag stream as free */
 	stream->busy = false;
+
+	return 0;
+}
+
+static int dma_stm32_get_status(struct device *dev, u32_t id,
+				struct dma_status *stat)
+{
+	struct dma_stm32_device *ddata = dev->driver_data;
+
+	if (id >= DMA_STM32_MAX_STREAMS || stat == NULL) {
+		return -EINVAL;
+	}
+
+	stat->dir = ddata->stream[id].direction;
+	stat->busy = ddata->stream[id].busy;
+	stat->pending_length = dma_stm32_read(ddata, DMA_STM32_SNDTR(id));
 
 	return 0;
 }
@@ -556,6 +581,7 @@ static const struct dma_driver_api dma_funcs = {
 	.config		 = dma_stm32_config,
 	.start		 = dma_stm32_start,
 	.stop		 = dma_stm32_stop,
+	.get_status 	 = dma_stm32_get_status,
 };
 
 const struct dma_stm32_config dma_stm32_1_cdata = {
