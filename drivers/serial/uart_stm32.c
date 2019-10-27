@@ -12,6 +12,7 @@
  *        Please validate for newly added series.
  */
 
+#include <string.h>
 #include <kernel.h>
 #include <arch/cpu.h>
 #include <misc/__assert.h>
