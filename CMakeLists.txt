@@ -1392,6 +1392,15 @@ list_append_ifdef(
   post_build_commands
   COMMAND ${CMAKE_COMMAND} -E copy ${KERNEL_ELF_NAME}    ${KERNEL_EXE_NAME}
   )
+  
+string(REPLACE "\\" "/" SBSFU_BUILD_PATH $ENV{SBSFU_BUILD_PATH})
+
+list_append_ifdef(
+  CONFIG_SHEELD_BUILD_OUTPUT_SFB
+  post_build_commands
+  COMMAND ${SBSFU_BUILD_PATH}/build_sfb.cmd ${KERNEL_BIN_NAME} $ENV{SHEELD_BUILD_FIRMWARE_VERSION}
+  )
+
 
 get_property(extra_post_build_commands
   GLOBAL PROPERTY
