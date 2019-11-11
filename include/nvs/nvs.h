@@ -7,13 +7,13 @@
 #ifndef ZEPHYR_INCLUDE_NVS_NVS_H_
 #define ZEPHYR_INCLUDE_NVS_NVS_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <sys/types.h>
 #include <kernel.h>
 #include <device.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 /**
  * @brief Non-volatile Storage
  * @defgroup nvs Non-volatile Storage
