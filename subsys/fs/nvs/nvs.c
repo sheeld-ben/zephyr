@@ -571,6 +571,9 @@ static int nvs_startup(struct nvs_fs *fs)
 			/* found ff empty location */
 			break;
 		}
+		if (rc < 0) {
+			goto end;
+		}
 	}
 
 	fs->ate_wra = addr;
