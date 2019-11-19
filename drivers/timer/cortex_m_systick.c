@@ -14,6 +14,7 @@ void z_ExcExit(void);
 #define TIMER_STOPPED 0xff000000
 
 #if defined(CONFIG_TIMER_READS_ITS_FREQUENCY_AT_RUNTIME)
+extern int z_clock_hw_cycles_per_sec;
 #define CYC_PER_TICK (SystemCoreClock	\
 		      / CONFIG_SYS_CLOCK_TICKS_PER_SEC)
 #else
