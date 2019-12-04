@@ -464,10 +464,12 @@ static void __stm32_exti_connect_irqs(struct device *dev)
 		CONFIG_EXTI_STM32_TAMP_STAMP_IRQ_PRI,
 		__stm32_exti_isr_21, DEVICE_GET(exti_stm32),
 		0);
+#ifndef CONFIG_USE_STM32_HAL_RTC
 	IRQ_CONNECT(RTC_WKUP_IRQn,
 		CONFIG_EXTI_STM32_RTC_WKUP_IRQ_PRI,
 		__stm32_exti_isr_22, DEVICE_GET(exti_stm32),
 		0);
+#endif
 #endif
 #if CONFIG_SOC_SERIES_STM32F7X
 	IRQ_CONNECT(LPTIM1_IRQn,
