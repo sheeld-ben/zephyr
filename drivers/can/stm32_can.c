@@ -226,6 +226,11 @@ int can_stm32_runtime_configure(struct device *dev, enum can_mode mode,
 		bitrate = cfg->bus_speed;
 	}
 
+	if (!bitrate) {
+		LOG_WRN("HAL_CAN_Init failed: %s no bitrate", dev->config->name);
+		return 0;
+	}
+
 	prescaler = clock_rate / (BIT_SEG_LENGTH(cfg) * bitrate);
 	if (prescaler == 0U || prescaler > 1024) {
 		LOG_ERR("HAL_CAN_Init failed: prescaler > max (%d > 1024)",
@@ -313,7 +318,7 @@ static int can_stm32_init(struct device *dev)
 		return -EIO;
 	}
 
-	ret = can_stm32_runtime_configure(dev, CAN_NORMAL_MODE, 0);
+	ret = can_stm32_runtime_configure(dev, CAN_SILENT_MODE, 0);
 	if (ret) {
 		return ret;
 	}
