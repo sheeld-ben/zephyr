@@ -414,6 +414,7 @@ static void __stm32_exti_connect_irqs(struct device *dev)
       defined(CONFIG_SOC_SERIES_STM32F4X) || \
       defined(CONFIG_SOC_SERIES_STM32F7X) || \
       defined(CONFIG_SOC_SERIES_STM32L4X)
+#ifndef CONFIG_USE_STM32_HAL_GPIO
 	IRQ_CONNECT(EXTI0_IRQn,
 		CONFIG_EXTI_STM32_EXTI0_IRQ_PRI,
 		__stm32_exti_isr_0, DEVICE_GET(exti_stm32),
@@ -449,6 +450,7 @@ static void __stm32_exti_connect_irqs(struct device *dev)
 		CONFIG_EXTI_STM32_EXTI15_10_IRQ_PRI,
 		__stm32_exti_isr_15_10, DEVICE_GET(exti_stm32),
 		0);
+#endif
 #if defined(CONFIG_SOC_SERIES_STM32F2X) || \
       defined(CONFIG_SOC_SERIES_STM32F4X) || \
       defined(CONFIG_SOC_SERIES_STM32F7X)
