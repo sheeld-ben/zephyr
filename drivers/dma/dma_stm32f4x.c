@@ -632,6 +632,7 @@ static void dma_stm32_1_config(struct dma_stm32_device *ddata)
 		    dma_stm32_irq_2, DEVICE_GET(dma_stm32_1), 0);
 	irq_enable(DMA1_Stream2_IRQn);
 
+#ifndef CONFIG_USE_STM32_HAL_DMA
 	IRQ_CONNECT(DMA1_Stream3_IRQn, DMA_STM32_IRQ_PRI,
 		    dma_stm32_irq_3, DEVICE_GET(dma_stm32_1), 0);
 	irq_enable(DMA1_Stream3_IRQn);
@@ -639,6 +640,7 @@ static void dma_stm32_1_config(struct dma_stm32_device *ddata)
 	IRQ_CONNECT(DMA1_Stream4_IRQn, DMA_STM32_IRQ_PRI,
 		    dma_stm32_irq_4, DEVICE_GET(dma_stm32_1), 0);
 	irq_enable(DMA1_Stream4_IRQn);
+#endif
 
 	IRQ_CONNECT(DMA1_Stream5_IRQn, DMA_STM32_IRQ_PRI,
 		    dma_stm32_irq_5, DEVICE_GET(dma_stm32_1), 0);
@@ -658,16 +660,15 @@ static void dma_stm32_2_config(struct dma_stm32_device *ddata)
 	ddata->base = DMA_STM32_2_BASE;
 	ddata->mem2mem = true;
 
-#ifndef CONFIG_USE_STM32_HAL_DMA
 	IRQ_CONNECT(DMA2_Stream0_IRQn, DMA_STM32_IRQ_PRI,
 		    dma_stm32_irq_0, DEVICE_GET(dma_stm32_2), 0);
 	irq_enable(DMA2_Stream0_IRQn);
-#endif
 
 	IRQ_CONNECT(DMA2_Stream1_IRQn, DMA_STM32_IRQ_PRI,
 		    dma_stm32_irq_1, DEVICE_GET(dma_stm32_2), 0);
 	irq_enable(DMA2_Stream1_IRQn);
 
+#ifndef CONFIG_USE_STM32_HAL_DMA
 	IRQ_CONNECT(DMA2_Stream2_IRQn, DMA_STM32_IRQ_PRI,
 		    dma_stm32_irq_2, DEVICE_GET(dma_stm32_2), 0);
 	irq_enable(DMA2_Stream2_IRQn);
@@ -679,6 +680,7 @@ static void dma_stm32_2_config(struct dma_stm32_device *ddata)
 	IRQ_CONNECT(DMA2_Stream4_IRQn, DMA_STM32_IRQ_PRI,
 		    dma_stm32_irq_4, DEVICE_GET(dma_stm32_2), 0);
 	irq_enable(DMA2_Stream4_IRQn);
+#endif
 
 	IRQ_CONNECT(DMA2_Stream5_IRQn, DMA_STM32_IRQ_PRI,
 		    dma_stm32_irq_5, DEVICE_GET(dma_stm32_2), 0);
