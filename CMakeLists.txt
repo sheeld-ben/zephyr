@@ -351,7 +351,7 @@ endif()
 zephyr_cc_option_ifdef(CONFIG_STACK_USAGE            -fstack-usage)
 
 # Force an error when things like SYS_INIT(foo, ...) occur with a missing header.
-zephyr_cc_option(-Werror=implicit-int)
+zephyr_compile_options($<$<COMPILE_LANGUAGE:C>:-Werror=implicit-int>)
 
 # Prohibit void pointer arithmetic. Illegal in C99
 zephyr_cc_option(-Wpointer-arith)
