@@ -4,6 +4,8 @@
 
 macro(toolchain_cc_cpp_base_flags dest_list_name)
   list(APPEND ${dest_list_name} "-fcheck-new")
+  list(APPEND ${dest_list_name} "-fno-threadsafe-statics")
+  list(APPEND ${dest_list_name} "-fno-use-cxa-atexit")
 endmacro()
 
 # The "register" keyword was deprecated since C++11, but not for C++98
