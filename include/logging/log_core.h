@@ -261,8 +261,8 @@ extern "C" {
 		    (_level <= LOG_RUNTIME_FILTER(_filter))) {		      \
 			struct log_msg_ids src_level = {		      \
 				.level = _level,			      \
-				.source_id = _id,			      \
-				.domain_id = CONFIG_LOG_DOMAIN_ID	      \
+				.domain_id = CONFIG_LOG_DOMAIN_ID,			      \
+				.source_id = _id	      \
 			};						      \
 									      \
 			if (IS_ENABLED(CONFIG_LOG_IMMEDIATE)) {	      \
