@@ -213,14 +213,13 @@ u32_t z_check_thread_stack_fail(const u32_t fault_addr,
  */
 static u32_t MpuFault(NANO_ESF *esf, int fromHardFault)
 {
-	u32_t reason = _NANO_ERR_HW_EXCEPTION;
+	u32_t reason = _NANO_ERR_HW_MPU_FAULT;
 	u32_t mmfar = -EINVAL;
 
 	PR_FAULT_INFO("***** MPU FAULT *****\n");
 
 	if ((SCB->CFSR & SCB_CFSR_MSTKERR_Msk) != 0) {
-		PR_FAULT_INFO("  Stacking error (context area might be"
-			" not valid)\n");
+		PR_FAULT_INFO("  Stacking error (context area might be not valid)\n");
 	}
 	if ((SCB->CFSR & SCB_CFSR_MUNSTKERR_Msk) != 0) {
 		PR_FAULT_INFO("  Unstacking error\n");
@@ -338,7 +337,7 @@ static u32_t MpuFault(NANO_ESF *esf, int fromHardFault)
  */
 static int BusFault(NANO_ESF *esf, int fromHardFault)
 {
-	u32_t reason = _NANO_ERR_HW_EXCEPTION;
+	u32_t reason = _NANO_ERR_HW_BUS_FAULT;
 
 	PR_FAULT_INFO("***** BUS FAULT *****\n");
 
@@ -494,7 +493,7 @@ static int BusFault(NANO_ESF *esf, int fromHardFault)
  */
 static u32_t UsageFault(const NANO_ESF *esf)
 {
-	u32_t reason = _NANO_ERR_HW_EXCEPTION;
+	u32_t reason = _NANO_ERR_HW_USAGE_FAULT;
 
 	PR_FAULT_INFO("***** USAGE FAULT *****\n");
 

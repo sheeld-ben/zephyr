@@ -53,6 +53,18 @@ void z_NanoFatalErrorHandler(unsigned int reason,
 	case _NANO_ERR_HW_EXCEPTION:
 		printk("***** Hardware exception *****\n");
 		break;
+	case _NANO_ERR_HW_MPU_FAULT:
+		printk("***** Hardware exception MPU Fault *****\n");
+		break;
+	case _NANO_ERR_HW_BUS_FAULT:
+		printk("***** Hardware exception BUS Fault *****\n");
+		break;
+	case _NANO_ERR_HW_USAGE_FAULT:
+		printk("***** Hardware exception USAGE Fault *****\n");
+		break;
+	case _NANO_ERR_HW_SECURE_FAULT:
+		printk("***** Hardware exception SECURE Fault *****\n");
+		break;
 #if defined(CONFIG_STACK_CANARIES) || defined(CONFIG_STACK_SENTINEL) || \
 		defined(CONFIG_HW_STACK_PROTECTION) || \
 		defined(CONFIG_USERSPACE)
@@ -77,8 +89,7 @@ void z_NanoFatalErrorHandler(unsigned int reason,
 		printk("**** Unknown Fatal Error %d! ****\n", reason);
 		break;
 	}
-	printk("Current thread ID = %p\n"
-	       "Faulting instruction address = 0x%x\n",
+	printk("Current thread ID = %p, Faulting instruction address = 0x%x\n",
 	       k_current_get(), pEsf->pc);
 
 	/*
