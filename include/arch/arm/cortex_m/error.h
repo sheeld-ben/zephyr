@@ -41,12 +41,13 @@ extern void z_SysFatalErrorHandler(unsigned int reason, const NANO_ESF *esf);
 #define _NANO_ERR_HW_MPU_IACCVIOL (14)  /* MPU fault: Instruction access violation flag. */
 #define _NANO_ERR_HW_MPU_MLSPERR (15)   /* MPU fault: Floating-point lazy state preservation error. */
 
-#define _NANO_ERR_HW_BUS_FAULT (20)     /* BUS fault */
-#define _NANO_ERR_HW_BUS_STKERR (21)    /* BUS fault: BusFault on stacking for exception entry. */
-#define _NANO_ERR_HW_BUS_UNSTKERR (22)  /* BUS fault: BusFault on unstacking for a return from exception. */
-#define _NANO_ERR_HW_BUS_PRECISERR (23) /* BUS fault: Precise data bus error. */
-#define _NANO_ERR_HW_BUS_IBUSERR (24)   /* BUS fault: Instruction bus error. */
-#define _NANO_ERR_HW_BUS_LSPERR (25)    /* BUS fault: Floating-point lazy state preservation error. */
+#define _NANO_ERR_HW_BUS_FAULT (20)       /* BUS fault */
+#define _NANO_ERR_HW_BUS_STKERR (21)      /* BUS fault: BusFault on stacking for exception entry. */
+#define _NANO_ERR_HW_BUS_UNSTKERR (22)    /* BUS fault: BusFault on unstacking for a return from exception. */
+#define _NANO_ERR_HW_BUS_PRECISERR (23)   /* BUS fault: Precise data bus error. */
+#define _NANO_ERR_HW_BUS_IMPRECISERR (24) /* BUS fault: Imprecise data bus error. */
+#define _NANO_ERR_HW_BUS_IBUSERR (25)     /* BUS fault: Instruction bus error. */
+#define _NANO_ERR_HW_BUS_LSPERR (26)      /* BUS fault: Floating-point lazy state preservation error. */
 
 #define _NANO_ERR_HW_USAGE_FAULT (30)      /* Usage fault */
 #define _NANO_ERR_HW_USAGE_DIVBYZERO (31)  /* Usage fault: Divide by zero flag. */
