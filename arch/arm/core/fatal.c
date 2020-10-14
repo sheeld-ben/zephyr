@@ -54,12 +54,30 @@ void z_NanoFatalErrorHandler(unsigned int reason,
 		printk("***** Hardware exception *****\n");
 		break;
 	case _NANO_ERR_HW_MPU_FAULT:
+	case _NANO_ERR_HW_MPU_MSTKERR:
+	case _NANO_ERR_HW_MPU_MUNSTKERR:
+	case _NANO_ERR_HW_MPU_DACCVIOL:
+	case _NANO_ERR_HW_MPU_IACCVIOL:
+	case _NANO_ERR_HW_MPU_MLSPERR:
 		printk("***** Hardware exception MPU Fault *****\n");
 		break;
 	case _NANO_ERR_HW_BUS_FAULT:
+	case _NANO_ERR_HW_BUS_STKERR:
+	case _NANO_ERR_HW_BUS_UNSTKERR:
+	case _NANO_ERR_HW_BUS_PRECISERR:
+	case _NANO_ERR_HW_BUS_IMPRECISERR:
+	case _NANO_ERR_HW_BUS_IBUSERR:
+	case _NANO_ERR_HW_BUS_LSPERR:
 		printk("***** Hardware exception BUS Fault *****\n");
 		break;
 	case _NANO_ERR_HW_USAGE_FAULT:
+	case _NANO_ERR_HW_USAGE_DIVBYZERO:
+	case _NANO_ERR_HW_USAGE_UNALIGNED:
+	case _NANO_ERR_HW_USAGE_STKOF:
+	case _NANO_ERR_HW_USAGE_NOCP:
+	case _NANO_ERR_HW_USAGE_INVPC:
+	case _NANO_ERR_HW_USAGE_INVSTATE:
+	case _NANO_ERR_HW_USAGE_UNDEFINSTR:
 		printk("***** Hardware exception USAGE Fault *****\n");
 		break;
 	case _NANO_ERR_HW_SECURE_FAULT:

@@ -220,12 +220,15 @@ static u32_t MpuFault(NANO_ESF *esf, int fromHardFault)
 
 	if ((SCB->CFSR & SCB_CFSR_MSTKERR_Msk) != 0) {
 		PR_FAULT_INFO("  Stacking error (context area might be not valid)\n");
+		reason = _NANO_ERR_HW_MPU_MSTKERR;
 	}
 	if ((SCB->CFSR & SCB_CFSR_MUNSTKERR_Msk) != 0) {
 		PR_FAULT_INFO("  Unstacking error\n");
+		reason = _NANO_ERR_HW_MPU_MUNSTKERR;
 	}
 	if ((SCB->CFSR & SCB_CFSR_DACCVIOL_Msk) != 0) {
 		PR_FAULT_INFO("  Data Access Violation\n");
+		reason = _NANO_ERR_HW_MPU_DACCVIOL;
 		/* In a fault handler, to determine the true faulting address:
 		 * 1. Read and save the MMFAR value.
 		 * 2. Read the MMARVALID bit in the MMFSR.
@@ -246,11 +249,13 @@ static u32_t MpuFault(NANO_ESF *esf, int fromHardFault)
 	}
 	if ((SCB->CFSR & SCB_CFSR_IACCVIOL_Msk) != 0) {
 		PR_FAULT_INFO("  Instruction Access Violation\n");
+		reason = _NANO_ERR_HW_MPU_IACCVIOL;
 	}
 #if defined(CONFIG_ARMV7_M_ARMV8_M_FP)
 	if ((SCB->CFSR & SCB_CFSR_MLSPERR_Msk) != 0) {
 		PR_FAULT_INFO(
 			"  Floating-point lazy state preservation error\n");
+		reason = _NANO_ERR_HW_MPU_MLSPERR;
 	}
 #endif /* !defined(CONFIG_ARMV7_M_ARMV8_M_FP) */
 
@@ -343,12 +348,15 @@ static int BusFault(NANO_ESF *esf, int fromHardFault)
 
 	if (SCB->CFSR & SCB_CFSR_STKERR_Msk) {
 		PR_FAULT_INFO("  Stacking error\n");
+		reason = _NANO_ERR_HW_BUS_STKERR;
 	}
 	if (SCB->CFSR & SCB_CFSR_UNSTKERR_Msk) {
 		PR_FAULT_INFO("  Unstacking error\n");
+		reason = _NANO_ERR_HW_BUS_UNSTKERR;
 	}
 	if (SCB->CFSR & SCB_CFSR_PRECISERR_Msk) {
 		PR_FAULT_INFO("  Precise data bus error\n");
+		reason = _NANO_ERR_HW_BUS_PRECISERR;
 		/* In a fault handler, to determine the true faulting address:
 		 * 1. Read and save the BFAR value.
 		 * 2. Read the BFARVALID bit in the BFSR.
@@ -357,7 +365,8 @@ static int BusFault(NANO_ESF *esf, int fromHardFault)
 		 * Software must follow this sequence because another
 		 * higher priority exception might change the BFAR value.
 		 */
-		STORE_xFAR(bfar, SCB->BFAR);
+		u32_t bfar = (u32_t)SCB->BFAR;
+		esf->pc = bfar;
 
 		if ((SCB->CFSR & SCB_CFSR_BFARVALID_Msk) != 0) {
 			PR_EXC("  BFAR Address: 0x%x\n", bfar);
@@ -369,14 +378,17 @@ static int BusFault(NANO_ESF *esf, int fromHardFault)
 	}
 	if (SCB->CFSR & SCB_CFSR_IMPRECISERR_Msk) {
 		PR_FAULT_INFO("  Imprecise data bus error\n");
+		reason = _NANO_ERR_HW_BUS_IMPRECISERR;
 	}
 	if ((SCB->CFSR & SCB_CFSR_IBUSERR_Msk) != 0) {
 		PR_FAULT_INFO("  Instruction bus error\n");
+		reason = _NANO_ERR_HW_BUS_IBUSERR;
 #if !defined(CONFIG_ARMV7_M_ARMV8_M_FP)
 	}
 #else
 	} else if (SCB->CFSR & SCB_CFSR_LSPERR_Msk) {
 		PR_FAULT_INFO("  Floating-point lazy state preservation error\n");
+		reason = _NANO_ERR_HW_BUS_LSPERR;
 	}
 #endif /* !defined(CONFIG_ARMV7_M_ARMV8_M_FP) */
 
@@ -500,9 +512,11 @@ static u32_t UsageFault(const NANO_ESF *esf)
 	/* bits are sticky: they stack and must be reset */
 	if ((SCB->CFSR & SCB_CFSR_DIVBYZERO_Msk) != 0) {
 		PR_FAULT_INFO("  Division by zero\n");
+		reason = _NANO_ERR_HW_USAGE_DIVBYZERO;
 	}
 	if ((SCB->CFSR & SCB_CFSR_UNALIGNED_Msk) != 0) {
 		PR_FAULT_INFO("  Unaligned memory access\n");
+		reason = _NANO_ERR_HW_USAGE_UNALIGNED;
 	}
 #if defined(CONFIG_ARMV8_M_MAINLINE)
 	if ((SCB->CFSR & SCB_CFSR_STKOF_Msk) != 0) {
@@ -516,20 +530,26 @@ static u32_t UsageFault(const NANO_ESF *esf)
 		 * the instruction that triggered the stack overflow.
 		 */
 		reason = _NANO_ERR_STACK_CHK_FAIL;
+#else
+		reason = _NANO_ERR_HW_USAGE_STKOF;
 #endif /* CONFIG_BUILTIN_STACK_GUARD */
 	}
 #endif /* CONFIG_ARMV8_M_MAINLINE */
 	if ((SCB->CFSR & SCB_CFSR_NOCP_Msk) != 0) {
 		PR_FAULT_INFO("  No coprocessor instructions\n");
+		reason = _NANO_ERR_HW_USAGE_NOCP;
 	}
 	if ((SCB->CFSR & SCB_CFSR_INVPC_Msk) != 0) {
 		PR_FAULT_INFO("  Illegal load of EXC_RETURN into PC\n");
+		reason = _NANO_ERR_HW_USAGE_INVPC;
 	}
 	if ((SCB->CFSR & SCB_CFSR_INVSTATE_Msk) != 0) {
 		PR_FAULT_INFO("  Illegal use of the EPSR\n");
+		reason = _NANO_ERR_HW_USAGE_INVSTATE;
 	}
 	if ((SCB->CFSR & SCB_CFSR_UNDEFINSTR_Msk) != 0) {
 		PR_FAULT_INFO("  Attempt to execute undefined instruction\n");
+		reason = _NANO_ERR_HW_USAGE_UNDEFINSTR;
 	}
 
 	/* clear UFSR sticky bits */
