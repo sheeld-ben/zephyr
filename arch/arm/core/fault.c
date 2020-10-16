@@ -241,6 +241,7 @@ static u32_t MpuFault(NANO_ESF *esf, int fromHardFault)
 
 		if ((SCB->CFSR & SCB_CFSR_MMARVALID_Msk) != 0) {
 			PR_EXC("  MMFAR Address: 0x%x\n", mmfar);
+			esf->pc = mmfar;
 			if (fromHardFault) {
 				/* clear SCB_MMAR[VALID] to reset */
 				SCB->CFSR &= ~SCB_CFSR_MMARVALID_Msk;
@@ -365,11 +366,11 @@ static int BusFault(NANO_ESF *esf, int fromHardFault)
 		 * Software must follow this sequence because another
 		 * higher priority exception might change the BFAR value.
 		 */
-		u32_t bfar = (u32_t)SCB->BFAR;
-		esf->pc = bfar;
+		u32_t bfar = SCB->BFAR;
 
 		if ((SCB->CFSR & SCB_CFSR_BFARVALID_Msk) != 0) {
 			PR_EXC("  BFAR Address: 0x%x\n", bfar);
+			esf->pc = bfar;
 			if (fromHardFault) {
 				/* clear SCB_CFSR_BFAR[VALID] to reset */
 				SCB->CFSR &= ~SCB_CFSR_BFARVALID_Msk;
