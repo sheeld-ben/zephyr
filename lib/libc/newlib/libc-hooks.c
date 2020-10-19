@@ -13,6 +13,7 @@
 #include <kernel_internal.h>
 #include <misc/errno_private.h>
 #include <misc/libc-hooks.h>
+#include <misc/mutex.h>
 #include <syscall_handler.h>
 #include <app_memory/app_memdomain.h>
 #include <init.h>
@@ -77,6 +78,20 @@ SYS_INIT(malloc_prepare, APPLICATION, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
 #endif /* CONFIG_NEWLIB_LIBC_ALIGNED_HEAP_SIZE */
 
 LIBC_BSS static unsigned int heap_sz;
+
+LIBC_DATA static SYS_MUTEX_DEFINE(heap_mtx);
+
+void __malloc_lock(struct _reent *reent)
+{
+	ARG_UNUSED(reent);
+	sys_mutex_lock(&heap_mtx, K_FOREVER);
+}
+
+void __malloc_unlock(struct _reent *reent)
+{
+	ARG_UNUSED(reent);
+	sys_mutex_unlock(&heap_mtx);
+}
 
 static int _stdout_hook_default(int c)
 {
