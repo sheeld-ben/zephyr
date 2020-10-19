@@ -300,7 +300,12 @@ endif()
 # 'cmake -DEXTRA_CFLAGS="-Werror -Wno-deprecated-declarations" ..'
 include(cmake/extra_flags.cmake)
 
+if (CONFIG_ASYNCHRONOUS_UNWIND_TABLES)
+zephyr_cc_option(-fasynchronous-unwind-tables)
+else()
 zephyr_cc_option(-fno-asynchronous-unwind-tables)
+endif()
+
 zephyr_cc_option(-fno-pie)
 zephyr_cc_option(-fno-pic)
 zephyr_cc_option(-fno-strict-overflow)
