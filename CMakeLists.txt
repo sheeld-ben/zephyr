@@ -309,7 +309,10 @@ endif()
 zephyr_cc_option(-fno-pie)
 zephyr_cc_option(-fno-pic)
 zephyr_cc_option(-fno-strict-overflow)
-zephyr_cc_option(-Wno-pointer-sign)
+zephyr_cc_option(-Wno-array-bounds)
+
+zephyr_compile_options($<$<COMPILE_LANGUAGE:C>:-Wno-pointer-sign>)
+zephyr_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-volatile>)
 
 if(CONFIG_OVERRIDE_FRAME_POINTER_DEFAULT)
   if(CONFIG_OMIT_FRAME_POINTER)

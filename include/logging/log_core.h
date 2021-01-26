@@ -260,9 +260,9 @@ extern "C" {
 		if (Z_LOG_CONST_LEVEL_CHECK(_level) &&			      \
 		    (_level <= LOG_RUNTIME_FILTER(_filter))) {		      \
 			struct log_msg_ids src_level = {		      \
-				.level = _level,			      \
-				.domain_id = CONFIG_LOG_DOMAIN_ID,			      \
-				.source_id = _id	      \
+				.level = (u16_t)_level,			      \
+				.domain_id = (u16_t)CONFIG_LOG_DOMAIN_ID,			      \
+				.source_id = (u16_t)_id	      \
 			};						      \
 									      \
 			if (IS_ENABLED(CONFIG_LOG_IMMEDIATE)) {	      \
