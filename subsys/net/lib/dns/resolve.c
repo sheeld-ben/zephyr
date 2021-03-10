@@ -17,6 +17,7 @@ LOG_MODULE_REGISTER(net_dns_resolve, CONFIG_DNS_RESOLVER_LOG_LEVEL);
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <random/rand32.h>
 
 #include <net/net_ip.h>
 #include <net/net_pkt.h>
@@ -352,6 +353,12 @@ static int dns_read(struct dns_resolve_context *ctx,
 	dns_msg.msg = dns_data->data;
 	dns_msg.msg_size = data_len;
 
+	/* Make sure that we can read DNS id, flags and rcode */
+	if (dns_msg.msg_size < (sizeof(*dns_id) + sizeof(uint16_t))) {
+		ret = DNS_EAI_FAIL;
+		goto quit;
+	}
+
 	/* The dns_unpack_response_header() has design flaw as it expects
 	 * dns id to be given instead of returning the id to the caller.
 	 * In our case we would like to get it returned instead so that we
@@ -433,6 +440,13 @@ static int dns_read(struct dns_resolve_context *ctx,
 				goto quit;
 			}
 
+			if ((dns_msg.response_position + address_size) >
+			    dns_msg.msg_size) {
+				/* Too short message */
+				ret = DNS_EAI_FAIL;
+				goto quit;
+			}
+
 			src = dns_msg.msg + dns_msg.response_position;
 
 			memcpy(addr, src, address_size);
@@ -455,7 +469,8 @@ static int dns_read(struct dns_resolve_context *ctx,
 		}
 
 		/* Update the answer offset to point to the next RR (answer) */
-		dns_msg.answer_offset += DNS_ANSWER_PTR_LEN;
+		dns_msg.answer_offset += dns_msg.response_position -
+							dns_msg.answer_offset;
 		dns_msg.answer_offset += dns_msg.response_length;
 
 		server_idx++;

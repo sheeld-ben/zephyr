@@ -401,6 +401,12 @@ endif # BT_PHY_UPDATE
 
 if BT_LL_SW
 
+config BT_CTLR_OPTIMIZE_FOR_SPEED
+	bool "Optimize for Speed"
+	default y if BT_CTLR_LE_ENC
+	help
+	  Optimize compilation of controller for execution speed.
+
 config BT_CTLR_WORKER_PRIO
 	int "Radio and Ticker's Worker IRQ priority"
 	range 0 3 if SOC_SERIES_NRF51X
@@ -550,6 +556,7 @@ if BT_CONN
 config BT_CTLR_FAST_ENC
 	bool "Fast Encryption Setup"
 	depends on BT_CTLR_LE_ENC
+	default y if BT_HCI_RAW
 	help
 	  Enable connection encryption setup in 3 connection intervals.
 	  Peripheral will respond to Encryption Request with Encryption Response
@@ -567,6 +574,13 @@ config BT_CTLR_LLID_DATA_START_EMPTY
 	help
 	  Handle zero length L2CAP start frame.
 
+config BT_CTLR_RX_ENQUEUE_HOLD
+	bool "Procedure Complete after on-air instant"
+	default y if BT_HCI_RAW
+	help
+	  Hold enqueue of Procedure Complete events with instant until after the
+	  on-air instant is reached.
+
 config BT_CTLR_TX_RETRY_DISABLE
 	bool "Disable Tx Retry"
 	help
@@ -582,6 +596,7 @@ config BT_CTLR_TX_RETRY_DISABLE
 
 config BT_CTLR_CONN_RSSI
 	bool "Connection RSSI"
+	default y if BT_HCI_RAW
 	help
 	  Enable connection RSSI measurement.
 
@@ -627,6 +642,8 @@ if BT_CTLR_GPIO_PA
 
 config BT_CTLR_GPIO_PA_PIN
 	int "Power Amplifier GPIO pin number"
+	range 0 47 if SOC_NRF52840
+	range 0 31
 	help
 	  GPIO Pin number connected to a Power Amplifier.
 
@@ -656,6 +673,8 @@ if BT_CTLR_GPIO_LNA
 
 config BT_CTLR_GPIO_LNA_PIN
 	int "Low Noise Amplifier GPIO pin number"
+	range 0 47 if SOC_NRF52840
+	range 0 31
 	help
 	  GPIO Pin number connected to a Low Noise Amplifier.
 

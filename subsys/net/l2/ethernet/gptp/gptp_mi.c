@@ -354,7 +354,8 @@ static void start_rcv_sync_timer(struct gptp_port_ds *port_ds,
 {
 	s32_t duration;
 
-	duration = port_ds->sync_receipt_timeout_time_itv;
+	duration = port_ds->sync_receipt_timeout_time_itv /
+		(NSEC_PER_USEC * USEC_PER_MSEC);
 
 	k_timer_start(&state->rcv_sync_receipt_timeout_timer, duration, 0);
 }
@@ -737,6 +738,13 @@ static void gptp_update_local_port_clock(void)
 		key = irq_lock();
 		ptp_clock_get(clk, &tm);
 
+		if (second_diff < 0 && tm.second < -second_diff) {
+			NET_DBG("Do not set local clock because %lu < %ld",
+				(unsigned long int)tm.second,
+				(long int)-second_diff);
+			goto skip_clock_set;
+		}
+
 		tm.second += second_diff;
 
 		if (nanosecond_diff < 0 &&
@@ -754,7 +762,18 @@ static void gptp_update_local_port_clock(void)
 			tm.nanosecond -= NSEC_PER_SEC;
 		}
 
+		/* This prints too much data normally but can be enabled to see
+		 * what time we are setting to the local clock.
+		 */
+		if (0) {
+			NET_INFO("Set local clock %lu.%lu",
+				 (unsigned long int)tm.second,
+				 (unsigned long int)tm.nanosecond);
+		}
+
 		ptp_clock_set(clk, &tm);
+
+	skip_clock_set:
 		irq_unlock(key);
 	} else {
 		if (nanosecond_diff < -200) {
@@ -1616,16 +1635,22 @@ static int compute_best_vector(void)
 	}
 
 	if (best_port != 0) {
-		memcpy(&global_ds->gm_priority.root_system_id,
-		       &best_vector->root_system_id,
-		       sizeof(struct gptp_root_system_identity));
+		if (&global_ds->gm_priority.root_system_id !=
+		    &best_vector->root_system_id) {
+			memcpy(&global_ds->gm_priority.root_system_id,
+			       &best_vector->root_system_id,
+			       sizeof(struct gptp_root_system_identity));
+		}
 
 		global_ds->gm_priority.steps_removed =
 			htons(ntohs(best_vector->steps_removed) + 1);
 
-		memcpy(&global_ds->gm_priority.src_port_id,
-		       &best_vector->src_port_id,
-		       sizeof(struct gptp_port_identity));
+		if (&global_ds->gm_priority.src_port_id !=
+		    &best_vector->src_port_id) {
+			memcpy(&global_ds->gm_priority.src_port_id,
+			       &best_vector->src_port_id,
+			       sizeof(struct gptp_port_identity));
+		}
 
 		global_ds->gm_priority.port_number = best_vector->port_number;
 	}

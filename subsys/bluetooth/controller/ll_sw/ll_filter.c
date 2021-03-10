@@ -24,7 +24,7 @@
 #define ADDR_TYPE_ANON 0xFF
 
 #define BT_DBG_ENABLED IS_ENABLED(CONFIG_BT_DEBUG_HCI_DRIVER)
-#define LOG_MODULE_NAME bt_ctlr_llsw_llfilter
+#define LOG_MODULE_NAME bt_ctlr_ll_filter
 #include "common/log.h"
 
 #include "hal/debug.h"
@@ -45,6 +45,7 @@ static struct {
 } wl[WL_SIZE];
 
 static u8_t rl_enable;
+
 static struct rl_dev {
 	u8_t      taken:1;
 	u8_t      rpas_ready:1;
@@ -120,7 +121,7 @@ static u32_t wl_add(bt_addr_le_t *id_addr)
 
 	/* Duplicate  check */
 	if (i < ARRAY_SIZE(wl)) {
-		return BT_HCI_ERR_INVALID_PARAM;
+		return 0;
 	} else if (j >= ARRAY_SIZE(wl)) {
 		return BT_HCI_ERR_MEM_CAPACITY_EXCEEDED;
 	}
@@ -566,6 +567,11 @@ static void rpa_adv_refresh(void)
 		return;
 	}
 
+	idx = ll_rl_find(ll_adv->id_addr_type, ll_adv->id_addr, NULL);
+	if (idx >= ARRAY_SIZE(rl)) {
+		return;
+	}
+
 	radio_adv_data = radio_adv_data_get();
 	prev = (struct pdu_adv *)&radio_adv_data->data[radio_adv_data->last][0];
 	/* use the last index in double buffer, */
@@ -589,8 +595,6 @@ static void rpa_adv_refresh(void)
 		pdu->chan_sel = 0U;
 	}
 
-	idx = ll_rl_find(ll_adv->id_addr_type, ll_adv->id_addr, NULL);
-	LL_ASSERT(idx < ARRAY_SIZE(rl));
 	ll_rl_pdu_adv_update(idx, pdu);
 
 	memcpy(&pdu->adv_ind.data[0], &prev->adv_ind.data[0],
@@ -684,20 +688,12 @@ static void rpa_timeout(struct k_work *work)
 
 static void rpa_refresh_start(void)
 {
-	if (!rl_enable) {
-		return;
-	}
-
 	BT_DBG("");
 	k_delayed_work_submit(&rpa_work, rpa_timeout_ms);
 }
 
 static void rpa_refresh_stop(void)
 {
-	if (!rl_enable) {
-		return;
-	}
-
 	k_delayed_work_cancel(&rpa_work);
 }
 

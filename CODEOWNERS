@@ -6,7 +6,9 @@
 # Do not use wildcard on all source yet
 # *                                        @galak @nashif
 
+/.github/                                 @nashif @galak
 /.known-issues/                           @inakypg @nashif
+/.buildkite/                              @galak
 /arch/arc/                                @vonhust @ruuddw
 /arch/arm/                                @MaureenHelm @galak
 /arch/arm/core/cortex_m/cmse/             @ioannisg
@@ -135,6 +137,7 @@ arch/arm/include/cortex_m/cmse.h          @ioannisg
 /drivers/usb/                             @jfischer-phytec-iot @finikorg
 /drivers/usb/device/usb_dc_stm32.c        @ydamigos @loicpoulain
 /drivers/i2c/i2c_ll_stm32*                @ldts @ydamigos
+/drivers/watchdog/wdt_handlers.c          @andrewboie
 /drivers/wifi/                            @jukkar @tbursztyka @pfalcon
 /drivers/wifi/eswifi/                     @loicpoulain
 /dts/arm/st/                              @erwango
@@ -217,6 +220,7 @@ arch/arm/include/cortex_m/cmse.h          @ioannisg
 /lib/gui/                                 @vanwinkeljan
 /lib/os/                                  @andrewboie @andyross
 /lib/posix/                               @pfalcon
+/lib/libc/                                @nashif @andrewboie
 /kernel/device.c                          @andrewboie @andyross @nashif
 /kernel/idle.c                            @andrewboie @andyross @nashif
 /samples/basic/servo_motor/*microbit*     @jhe
@@ -237,6 +241,7 @@ arch/arm/include/cortex_m/cmse.h          @ioannisg
 /samples/subsys/shell/                    @jarz-nordic @nordic-krch
 /samples/subsys/usb/                      @jfischer-phytec-iot @finikorg
 /samples/subsys/power/                    @ramakrishnapallala @pizi-nordic
+/scripts/ci/                              @nashif @galak
 /scripts/coccicheck                       @himanshujha199640 @JuliaLawall
 /scripts/coccinelle/                      @himanshujha199640 @JuliaLawall
 /scripts/elf_helper.py                    @andrewboie
@@ -275,7 +280,9 @@ arch/arm/include/cortex_m/cmse.h          @ioannisg
 /subsys/settings/                         @nvlsianpu
 /subsys/shell/                            @jarz-nordic @nordic-krch
 /subsys/storage/                          @nvlsianpu
+/subsys/testsuite/                        @nashif
 /subsys/usb/                              @jfischer-phytec-iot @finikorg
+/tests/application_development/libcxx/    @pabigot
 /tests/boards/native_posix/               @aescolar
 /tests/boards/intel_s1000_crb/            @rgundi @dcpleung @sathishkuttan
 /tests/bluetooth/                         @sjanc @jhedberg @Vudentz
@@ -287,6 +294,7 @@ arch/arm/include/cortex_m/cmse.h          @ioannisg
 /tests/drivers/spi/                       @tbursztyka
 /tests/drivers/uart/uart_async_api/       @Mierunski
 /tests/kernel/                            @andrewboie @andyross @nashif
+/tests/lib/                               @nashif
 /tests/net/                               @jukkar @tbursztyka @pfalcon
 /tests/net/buf/                           @jukkar @jhedberg @tbursztyka @pfalcon
 /tests/net/lib/                           @jukkar @tbursztyka @pfalcon

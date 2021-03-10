@@ -176,6 +176,16 @@ return_loc:
 	pop_s r3    /* status32 into r3 */
 	kflag r3    /* write status32 */
 
+#ifdef CONFIG_TRACING
+	push_s blink
+	push_s r1
+
+	bl sys_trace_thread_switched_in
+
+	pop_s r1
+	pop_s blink
+#endif
+
 	j_s.d [blink] /* always execute delay slot */
 	seti r1       /* delay slot */
 
@@ -184,6 +194,15 @@ return_loc:
 _swap_return_from_rirq:
 _swap_return_from_firq:
 
+#if defined(CONFIG_USERSPACE)
+/*
+ * need to recover the user/kernel status of interrupted thread
+ */
+	pop_s r3
+	lr r2, [_ARC_V2_AUX_IRQ_ACT]
+	or r2, r2, r3
+	sr r2, [_ARC_V2_AUX_IRQ_ACT]
+#endif
 	lr r3, [_ARC_V2_STATUS32]
 	bbit1 r3, _ARC_V2_STATUS32_AE_BIT, _return_from_exc_irq
 
@@ -199,13 +218,17 @@ _swap_return_from_firq:
 #endif
 
 	lr r3, [_ARC_V2_AUX_IRQ_ACT]
-	brne r3, 0, _swap_already_in_irq
-
 	/* use lowest interrupt priority */
 	or r3, r3, (1<<(CONFIG_NUM_IRQ_PRIO_LEVELS-1))
 	sr r3, [_ARC_V2_AUX_IRQ_ACT]
 
-_swap_already_in_irq:
+#ifdef CONFIG_TRACING
+	push_s blink
+
+	bl sys_trace_thread_switched_in
+
+	pop_s blink
+#endif
 	rtie
 
 .balign 4
@@ -226,6 +249,13 @@ _return_from_exc:
 	sr ilink, [_ARC_V2_ERSTATUS]
 	add_s sp, sp, ___isf_t_status32_OFFSET - ___isf_t_pc_OFFSET + 4
 
+#ifdef CONFIG_TRACING
+	push_s blink
+
+	bl sys_trace_thread_switched_in
+
+	pop_s blink
+#endif
 	rtie
 
 

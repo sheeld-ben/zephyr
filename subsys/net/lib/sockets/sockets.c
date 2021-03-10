@@ -27,7 +27,7 @@ LOG_MODULE_REGISTER(net_sock, CONFIG_NET_SOCKETS_LOG_LEVEL);
 	do { \
 		const struct socket_op_vtable *vtable; \
 		void *ctx = get_sock_vtable(sock, &vtable); \
-		if (ctx == NULL) { \
+		if (ctx == NULL || vtable->fn == NULL) { \
 			return -1; \
 		} \
 		return vtable->fn(ctx, __VA_ARGS__); \
@@ -89,6 +89,16 @@ int zsock_socket_internal(int family, int type, int proto)
 		return -1;
 	}
 
+	if (proto == 0) {
+		if (family == AF_INET || family == AF_INET6) {
+			if (type == SOCK_DGRAM) {
+				proto = IPPROTO_UDP;
+			} else if (type == SOCK_STREAM) {
+				proto = IPPROTO_TCP;
+			}
+		}
+	}
+
 	res = net_context_get(family, type, proto, &ctx);
 	if (res < 0) {
 		z_free_fd(fd);
@@ -98,6 +108,9 @@ int zsock_socket_internal(int family, int type, int proto)
 
 	/* Initialize user_data, all other calls will preserve it */
 	ctx->user_data = NULL;
+
+	/* The socket flags are stored here */
+	ctx->socket_data = NULL;
 
 	/* recv_q and accept_q are in union */
 	k_fifo_init(&ctx->recv_q);
@@ -372,6 +385,9 @@ Z_SYSCALL_HANDLER(zsock_listen, sock, backlog)
 int zsock_accept_ctx(struct net_context *parent, struct sockaddr *addr,
 		     socklen_t *addrlen)
 {
+	s32_t timeout = K_FOREVER;
+	struct net_context *ctx;
+	struct net_pkt *last_pkt;
 	int fd;
 
 	fd = z_reserve_fd();
@@ -379,7 +395,36 @@ int zsock_accept_ctx(struct net_context *parent, struct sockaddr *addr,
 		return -1;
 	}
 
-	struct net_context *ctx = k_fifo_get(&parent->accept_q, K_FOREVER);
+	if (net_context_get_ip_proto(parent) == IPPROTO_TCP) {
+		net_context_set_state(parent, NET_CONTEXT_LISTENING);
+	}
+
+	if (sock_is_nonblock(parent)) {
+		timeout = K_NO_WAIT;
+	}
+
+	ctx = k_fifo_get(&parent->accept_q, timeout);
+	if (ctx == NULL) {
+		errno = EAGAIN;
+		return -1;
+	}
+
+	/* Check if the connection is already disconnected */
+	last_pkt = k_fifo_peek_tail(&ctx->recv_q);
+	if (last_pkt) {
+		if (net_pkt_eof(last_pkt)) {
+			sock_set_eof(ctx);
+			errno = ECONNABORTED;
+			return -1;
+		}
+	}
+
+	if (net_context_is_closing(ctx)) {
+		errno = ECONNABORTED;
+		return -1;
+	}
+
+	net_context_set_accepting(ctx, false);
 
 #ifdef CONFIG_USERSPACE
 	z_object_recycle(ctx);
@@ -784,6 +829,10 @@ ssize_t zsock_recvfrom_ctx(struct net_context *ctx, void *buf, size_t max_len,
 			   struct sockaddr *src_addr, socklen_t *addrlen)
 {
 	enum net_sock_type sock_type = net_context_get_type(ctx);
+
+	if (max_len == 0) {
+		return 0;
+	}
 
 	if (sock_type == SOCK_DGRAM) {
 		return zsock_recv_dgram(ctx, buf, max_len, flags, src_addr, addrlen);
