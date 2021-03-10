@@ -47,6 +47,7 @@ LOG_MODULE_REGISTER(sdhc, CONFIG_DISK_LOG_LEVEL);
 #define SDHC_CHECK 0xAA
 #define SDHC_CSD_SIZE 16
 #define SDHC_CSD_V2 1
+#define SDSC_CSD_V1 0
 
 /* R1 response status */
 #define SDHC_R1_IDLE 0x01
@@ -70,7 +71,7 @@ LOG_MODULE_REGISTER(sdhc, CONFIG_DISK_LOG_LEVEL);
 /* Clock speed used during initialisation */
 #define SDHC_INITIAL_SPEED 400000
 /* Clock speed used after initialisation */
-#define SDHC_SPEED 4000000
+#define SDHC_SPEED 24000000
 
 #define SDHC_MIN_TRIES 20
 #define SDHC_RETRY_DELAY K_MSEC(20)
@@ -85,6 +86,8 @@ struct sdhc_data {
 	struct device *cs;
 	u32_t pin;
 
+	bool sdsc;
+	u32_t sector_size;
 	u32_t sector_count;
 	u8_t status;
 	int trace_dir;
@@ -455,11 +458,7 @@ static int sdhc_cmd_r1_raw(struct sdhc_data *data, u8_t cmd, u32_t payload)
 	err = sdhc_skip_until_start(data);
 
 	/* Ensure there's a idle byte between commands */
-	if (cmd != SDHC_SEND_CSD && cmd != SDHC_SEND_CID &&
-	    cmd != SDHC_READ_SINGLE_BLOCK && cmd != SDHC_READ_MULTIPLE_BLOCK &&
-	    cmd != SDHC_WRITE_BLOCK && cmd != SDHC_WRITE_MULTIPLE_BLOCK) {
-		sdhc_rx_u8(data);
-	}
+	sdhc_rx_u8(data);
 
 	return err;
 }
@@ -750,10 +749,7 @@ static int sdhc_detect(struct sdhc_data *data)
 		return err;
 	}
 
-	if ((ocr & SDHC_CCS) == 0U) {
-		/* A 'SDSC' card */
-		return -ENOTSUP;
-	}
+	data->sdsc = ((ocr & SDHC_CCS) == 0U); /* A 'SDSC' card */
 
 	/* Read the CSD */
 	err = sdhc_cmd_r1(data, SDHC_SEND_CSD, 0);
@@ -768,23 +764,77 @@ static int sdhc_detect(struct sdhc_data *data)
 
 	/* Bits 126..127 are the structure version */
 	structure = (buf[0] >> 6);
-	if (structure != SDHC_CSD_V2) {
+
+	if (data->sdsc) {
+		if (structure != SDSC_CSD_V1) {
+			/* Unsupported CSD format */
+			return -ENOTSUP;
+		}
+	}
+	else if (structure != SDHC_CSD_V2) {
 		/* Unsupported CSD format */
 		return -ENOTSUP;
 	}
 
-	/* Bits 48..69 are the capacity of the card in 512 KiB units, minus 1.
-	 */
-	csize = sys_get_be32(&buf[6]) & ((1 << 22) - 1);
-	if (csize < 4112) {
-		/* Invalid capacity according to section 5.3.3 */
-		return -ENOTSUP;
+	if (data->sdsc) {
+		csize = (sys_get_be32(&buf[6]) >> 14) & (0xFFF) ;
+
+		u32_t mult = 2;
+		u32_t block_len = 2;
+		u32_t write_len = 2;
+		u32_t temp;
+		u32_t erase_blk_en;
+
+		temp = ((sys_get_be32(&buf[9]) >> 23) & (0x7)) + 2;
+		for (u32_t i = 1; i < temp; i++) {
+			mult *= 2;
+		}
+
+		temp = (sys_get_be32(&buf[5]) >> 24) & 0xF;
+		for (u32_t i = 1; i < temp; i++) {
+			block_len *= 2;
+		}
+
+		temp = (sys_get_be32(&buf[12]) >> 22) & 0xF;
+		for (u32_t i = 1; i < temp; i++) {
+			write_len *= 2;
+		}
+
+		if (write_len != block_len) {
+			return -ENOTSUP;
+		}
+
+		/* Read ERASE_BLK_EN */
+		erase_blk_en = (sys_get_be32(&buf[10]) >> 30) & 0x1;
+
+		if (erase_blk_en) {
+			data->sector_size = 512;
+		}
+		else {
+			/* Read SECTOR_SIZE */
+			data->sector_size = (((buf[11] & 0b11111100) >> 2) | ((buf[12] & 0b00000001) << 7)) + 1;
+		}
+
+		data->sector_count = (csize + 1) * (mult * block_len / data->sector_size);
+
+		LOG_INF("Found a ~%u bytes SDSC card.", 
+			data->sector_count * data->sector_size);
 	}
+	else {
+		/* Bits 48..69 are the capacity of the card in 512 KiB units, minus 1.
+		 */
+		csize = sys_get_be32(&buf[6]) & ((1 << 22) - 1);
+		if (csize < 4112) {
+			/* Invalid capacity according to section 5.3.3 */
+			return -ENOTSUP;
+		}
 
-	data->sector_count = (csize + 1) * (512 * 1024 / SDHC_SECTOR_SIZE);
+		data->sector_size = SDHC_SECTOR_SIZE;
+		data->sector_count = (csize + 1) * (512 * 1024 / SDHC_SECTOR_SIZE);
 
-	LOG_INF("Found a ~%u MiB SDHC card.",
-		data->sector_count / (1024 * 1024 / SDHC_SECTOR_SIZE));
+		LOG_INF("Found a ~%u MiB SDHC card.",
+			data->sector_count / (1024 * 1024 / SDHC_SECTOR_SIZE));
+	}
 
 	/* Read the CID */
 	err = sdhc_cmd_r1(data, SDHC_SEND_CID, 0);
@@ -819,6 +869,10 @@ static int sdhc_read(struct sdhc_data *data, u8_t *buf, u32_t sector,
 		return err;
 	}
 
+	if (data->sdsc) {
+		sector *= data->sector_size;
+	}
+
 	sdhc_set_cs(data, 0);
 
 	/* Send the start read command */
@@ -829,12 +883,12 @@ static int sdhc_read(struct sdhc_data *data, u8_t *buf, u32_t sector,
 
 	/* Read the sectors */
 	for (; count != 0U; count--) {
-		err = sdhc_rx_block(data, buf, SDHC_SECTOR_SIZE);
+		err = sdhc_rx_block(data, buf, data->sector_size);
 		if (err != 0) {
 			goto error;
 		}
 
-		buf += SDHC_SECTOR_SIZE;
+		buf += data->sector_size;
 	}
 
 	/* Ignore the error as STOP_TRANSMISSION always returns 0x7F */
@@ -859,6 +913,10 @@ static int sdhc_write(struct sdhc_data *data, const u8_t *buf, u32_t sector,
 		return err;
 	}
 
+	if (data->sdsc) {
+		sector *= data->sector_size;
+	}
+
 	sdhc_set_cs(data, 0);
 
 	/* Write the blocks one-by-one */
@@ -868,7 +926,7 @@ static int sdhc_write(struct sdhc_data *data, const u8_t *buf, u32_t sector,
 			goto error;
 		}
 
-		err = sdhc_tx_block(data, (u8_t *)buf, SDHC_SECTOR_SIZE);
+		err = sdhc_tx_block(data, (u8_t *)buf, data->sector_size);
 		if (err != 0) {
 			goto error;
 		}
@@ -884,8 +942,14 @@ static int sdhc_write(struct sdhc_data *data, const u8_t *buf, u32_t sector,
 			goto error;
 		}
 
-		buf += SDHC_SECTOR_SIZE;
-		sector++;
+		buf += data->sector_size;
+
+		if (data->sdsc) {
+			sector += data->sector_size;
+		}
+		else {
+			sector++;
+		}
 	}
 
 	err = 0;
@@ -980,10 +1044,10 @@ static int disk_sdhc_access_ioctl(struct disk_info *disk, u8_t cmd, void *buf)
 		*(u32_t *)buf = data->sector_count;
 		break;
 	case DISK_IOCTL_GET_SECTOR_SIZE:
-		*(u32_t *)buf = SDHC_SECTOR_SIZE;
+		*(u32_t *)buf = data->sector_size;
 		break;
 	case DISK_IOCTL_GET_ERASE_BLOCK_SZ:
-		*(u32_t *)buf = SDHC_SECTOR_SIZE;
+		*(u32_t *)buf = data->sector_size;
 		break;
 	default:
 		return -EINVAL;

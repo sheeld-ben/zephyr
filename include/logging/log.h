@@ -275,6 +275,7 @@ int log_printk(const char *fmt, va_list ap);
  *	   a buffer from the pool (see CONFIG_LOG_STRDUP_MAX_STRING).
  */
 char *log_strdup(const char *str);
+char *log_strdup_n(const char *str, size_t len);
 
 #ifdef __cplusplus
 }

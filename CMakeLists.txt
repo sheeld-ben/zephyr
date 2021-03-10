@@ -300,11 +300,18 @@ endif()
 # 'cmake -DEXTRA_CFLAGS="-Werror -Wno-deprecated-declarations" ..'
 include(cmake/extra_flags.cmake)
 
+if (CONFIG_ASYNCHRONOUS_UNWIND_TABLES)
+zephyr_cc_option(-fasynchronous-unwind-tables)
+else()
 zephyr_cc_option(-fno-asynchronous-unwind-tables)
+endif()
+
 zephyr_cc_option(-fno-pie)
 zephyr_cc_option(-fno-pic)
 zephyr_cc_option(-fno-strict-overflow)
-zephyr_cc_option(-Wno-pointer-sign)
+zephyr_cc_option(-Wno-array-bounds)
+
+zephyr_compile_options($<$<COMPILE_LANGUAGE:C>:-Wno-pointer-sign>)
 
 if(CONFIG_OVERRIDE_FRAME_POINTER_DEFAULT)
   if(CONFIG_OMIT_FRAME_POINTER)
@@ -351,7 +358,7 @@ endif()
 zephyr_cc_option_ifdef(CONFIG_STACK_USAGE            -fstack-usage)
 
 # Force an error when things like SYS_INIT(foo, ...) occur with a missing header.
-zephyr_cc_option(-Werror=implicit-int)
+zephyr_compile_options($<$<COMPILE_LANGUAGE:C>:-Werror=implicit-int>)
 
 # Prohibit void pointer arithmetic. Illegal in C99
 zephyr_cc_option(-Wpointer-arith)
@@ -1399,6 +1406,15 @@ list_append_ifdef(
   post_build_commands
   COMMAND ${CMAKE_COMMAND} -E copy ${KERNEL_ELF_NAME}    ${KERNEL_EXE_NAME}
   )
+  
+string(REPLACE "\\" "/" SBSFU_BUILD_PATH $ENV{SBSFU_BUILD_PATH})
+
+list_append_ifdef(
+  CONFIG_SHEELD_BUILD_OUTPUT_SHD
+  post_build_commands
+  COMMAND ${SBSFU_BUILD_PATH}/build_shd.cmd ${KERNEL_BIN_NAME} $ENV{SHEELD_BUILD_FIRMWARE_VERSION} $ENV{SHEELD_BUILD_FIRMWARE_DESCRIPTION}
+  )
+
 
 get_property(extra_post_build_commands
   GLOBAL PROPERTY

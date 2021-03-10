@@ -15,6 +15,10 @@
 #include <pinmux/stm32/pinmux_stm32.h>
 #include <gpio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* GPIO buses definitions */
 
 #define STM32_PORT_NOT_AVAILABLE 0xFFFFFFFF
@@ -112,6 +116,8 @@
 #define STM32_PINCFG_FLOATING		STM32_CNF_IN_FLOAT | STM32_PUPD_NO_PULL
 #else
 #define STM32_PINCFG_MODE_OUTPUT	STM32_MODER_OUTPUT_MODE
+#define STM32_PINCFG_PUSH_PULL          STM32_OTYPER_PUSH_PULL
+#define STM32_PINCFG_OPEN_DRAIN         STM32_OTYPER_OPEN_DRAIN
 #define STM32_PINCFG_MODE_INPUT		STM32_MODER_INPUT_MODE
 #define STM32_PINCFG_PULL_UP		STM32_PUPDR_PULL_UP
 #define STM32_PINCFG_PULL_DOWN		STM32_PUPDR_PULL_DOWN
@@ -148,5 +154,9 @@ struct gpio_stm32_data {
  * @param altf Alternate function
  */
 int gpio_stm32_configure(u32_t *base_addr, int pin, int conf, int altf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZEPHYR_DRIVERS_GPIO_GPIO_STM32_H_ */

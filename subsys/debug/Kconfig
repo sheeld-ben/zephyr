@@ -217,6 +217,15 @@ config EXCEPTION_STACK_TRACE
 	  print a stack trace of function memory addresses when an
 	  exception is reported.
 
+config ASYNCHRONOUS_UNWIND_TABLES
+	bool "Enable asynchronous unwind tables"
+	default n
+	help
+	  Generate unwind table in dwarf2 format, if supported by target machine.
+	  The table is exact at each instruction boundary, so it can be used for
+	  stack unwinding from asynchronous events (such as debugger or garbage
+	  collector).
+
 #
 # Miscellaneous debugging options
 #

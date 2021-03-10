@@ -65,9 +65,13 @@ hang_system:
 #else
 	ARG_UNUSED(reason);
 #endif
-
+#ifdef CONFIG_NO_OPTIMIZATIONS
 	for (;;) {
 		k_cpu_idle();
 	}
+#else
+	NVIC_SystemReset();
+#endif
+
 	CODE_UNREACHABLE;
 }

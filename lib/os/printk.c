@@ -105,7 +105,7 @@ void z_vprintk(out_func_t out, void *ctx, const char *fmt, va_list ap)
 	int might_format = 0; /* 1 if encountered a '%' */
 	enum pad_type padding = PAD_NONE;
 	int min_width = -1;
-	int long_ctr = 0;
+	char length_mod = 0;
 
 	/* fmt has already been adjusted if needed */
 
@@ -117,7 +117,7 @@ void z_vprintk(out_func_t out, void *ctx, const char *fmt, va_list ap)
 				might_format = 1;
 				min_width = -1;
 				padding = PAD_NONE;
-				long_ctr = 0;
+				length_mod = 0;
 			}
 		} else {
 			switch (*fmt) {
@@ -150,34 +150,39 @@ void z_vprintk(out_func_t out, void *ctx, const char *fmt, va_list ap)
 					padding = PAD_SPACE_BEFORE;
 				}
 				goto still_might_format;
-			case 'l':
-				long_ctr++;
-				/* Fall through */
-			case 'z':
 			case 'h':
-				/* FIXME: do nothing for these modifiers */
+			case 'l':
+			case 'z':
+				if (*fmt == 'h' && length_mod == 'h') {
+					length_mod = 'H';
+				} else if (*fmt == 'l' && length_mod == 'l') {
+					length_mod = 'L';
+				} else if (length_mod == 0) {
+					length_mod = *fmt;
+				} else {
+					out((int)'%', ctx);
+					out((int)*fmt, ctx);
+					break;
+				}
 				goto still_might_format;
 			case 'd':
 			case 'i': {
-				s32_t d;
+				long d;
 
-				if (long_ctr == 0) {
+				if (length_mod == 'z') {
 					d = va_arg(ap, int);
-				} else if (long_ctr == 1) {
-					long ld = va_arg(ap, long);
-					if (ld > INT32_MAX || ld < INT32_MIN) {
-						print_err(out, ctx);
-						break;
-					}
-					d = (s32_t)ld;
-				} else {
+				} else if (length_mod == 'l') {
+					d = va_arg(ap, long);
+				} else if (length_mod == 'L') {
 					long long lld = va_arg(ap, long long);
-					if (lld > INT32_MAX ||
-					    lld < INT32_MIN) {
+					if (lld > __LONG_MAX__ ||
+					    lld < ~__LONG_MAX__) {
 						print_err(out, ctx);
 						break;
 					}
-					d = (s32_t)lld;
+					d = lld;
+				} else {
+					d = va_arg(ap, int);
 				}
 
 				if (d < 0) {
@@ -190,25 +195,22 @@ void z_vprintk(out_func_t out, void *ctx, const char *fmt, va_list ap)
 				break;
 			}
 			case 'u': {
-				u32_t u;
+				unsigned long u;
 
-				if (long_ctr == 0) {
-					u = va_arg(ap, unsigned int);
-				} else if (long_ctr == 1) {
-					long lu = va_arg(ap, unsigned long);
-					if (lu > INT32_MAX) {
-						print_err(out, ctx);
-						break;
-					}
-					u = (u32_t)lu;
-				} else {
+				if (length_mod == 'z') {
+					u = va_arg(ap, size_t);
+				} else if (length_mod == 'l') {
+					u = va_arg(ap, unsigned long);
+				} else if (length_mod == 'L') {
 					unsigned long long llu =
 						va_arg(ap, unsigned long long);
-					if (llu > INT32_MAX) {
+					if (llu > ~0UL) {
 						print_err(out, ctx);
 						break;
 					}
-					u = (u32_t)llu;
+					u = llu;
+				} else {
+					u = va_arg(ap, unsigned int);
 				}
 
 				_printk_dec_ulong(out, ctx, u, padding,
@@ -216,20 +218,28 @@ void z_vprintk(out_func_t out, void *ctx, const char *fmt, va_list ap)
 				break;
 			}
 			case 'p':
-				  out('0', ctx);
-				  out('x', ctx);
-				  /* left-pad pointers with zeros */
-				  padding = PAD_ZERO_BEFORE;
-				  min_width = 8;
-				  /* Fall through */
+				out('0', ctx);
+				out('x', ctx);
+				/* left-pad pointers with zeros */
+				padding = PAD_ZERO_BEFORE;
+				if (IS_ENABLED(CONFIG_64BIT)) {
+					min_width = 16;
+				} else {
+					min_width = 8;
+				}
+				/* Fall through */
 			case 'x':
 			case 'X': {
 				unsigned long long x;
 
-				if (long_ctr < 2) {
+				if (*fmt == 'p') {
+					x = (uintptr_t)va_arg(ap, void *);
+				} else if (length_mod == 'l') {
 					x = va_arg(ap, unsigned long);
-				} else {
+				} else if (length_mod == 'L') {
 					x = va_arg(ap, unsigned long long);
+				} else {
+					x = va_arg(ap, unsigned int);
 				}
 
 				_printk_hex_ulong(out, ctx, x, padding,
@@ -240,8 +250,9 @@ void z_vprintk(out_func_t out, void *ctx, const char *fmt, va_list ap)
 				char *s = va_arg(ap, char *);
 				char *start = s;
 
-				while (*s)
+				while (*s) {
 					out((int)(*s++), ctx);
+				}
 
 				if (padding == PAD_SPACE_AFTER) {
 					int remaining = min_width - (s - start);
@@ -255,6 +266,14 @@ void z_vprintk(out_func_t out, void *ctx, const char *fmt, va_list ap)
 				int c = va_arg(ap, int);
 
 				out(c, ctx);
+				break;
+			}
+			case 'f': {
+				double d = va_arg(ap, double);
+
+				_printk_dec_ulong(out, ctx, (long)d, padding, min_width);
+				out((int)'.', ctx);
+				_printk_dec_ulong(out, ctx, (long)((d - (long)d) * 1000), PAD_NONE, 0);
 				break;
 			}
 			case '%': {

@@ -273,9 +273,9 @@ extern "C" {
 		    (is_user_context ||					      \
 		     (_level <= LOG_RUNTIME_FILTER(_filter)))) {	      \
 			struct log_msg_ids src_level = {		      \
-				.level = _level,			      \
-				.source_id = _id,			      \
-				.domain_id = CONFIG_LOG_DOMAIN_ID	      \
+				.level = (u16_t)_level,			      \
+				.domain_id = (u16_t)CONFIG_LOG_DOMAIN_ID,			      \
+				.source_id = (u16_t)_id	      \
 			};						      \
 									      \
 			if (is_user_context) {				      \

@@ -692,6 +692,11 @@ u32_t log_filter_get(struct log_backend const *const backend,
 
 char *log_strdup(const char *str)
 {
+	return log_strdup_n(str, (size_t)(-1));
+}
+
+char *log_strdup_n(const char *str, size_t len)
+{
 	struct log_strdup_buf *dup;
 	int err;
 
@@ -709,9 +714,19 @@ char *log_strdup(const char *str)
 	/* Set 'allocated' flag. */
 	(void)atomic_set(&dup->refcount, 1);
 
-	strncpy(dup->buf, str, sizeof(dup->buf) - 2);
-	dup->buf[sizeof(dup->buf) - 2] = '~';
-	dup->buf[sizeof(dup->buf) - 1] = '\0';
+	if (len > (sizeof(dup->buf) - 1))
+	{
+		len = sizeof(dup->buf) - 2;
+
+		dup->buf[sizeof(dup->buf) - 2] = '~';
+		dup->buf[sizeof(dup->buf) - 1] = '\0';
+	}
+	else
+	{
+		dup->buf[len] = '\0';
+	}
+
+	strncpy(dup->buf, str, len);
 
 	return dup->buf;
 }

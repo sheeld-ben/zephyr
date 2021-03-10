@@ -274,6 +274,7 @@ enum uart_config_data_bits {
 	UART_CFG_DATA_BITS_6,
 	UART_CFG_DATA_BITS_7,
 	UART_CFG_DATA_BITS_8,
+	UART_CFG_DATA_BITS_9,
 };
 
 /**
@@ -336,7 +337,7 @@ struct uart_device_config {
 	struct pci_dev_info  pci_dev;
 #endif /* CONFIG_PCI */
 
-#ifdef CONFIG_UART_INTERRUPT_DRIVEN
+#if defined(CONFIG_UART_INTERRUPT_DRIVEN) || defined(CONFIG_UART_ASYNC_API)
 	uart_irq_config_func_t	irq_config_func;
 #endif
 };
@@ -465,11 +466,10 @@ static inline int uart_callback_set(struct device *dev,
  * @retval -EBUSY There is already an ongoing transfer.
  * @retval 0	  If successful, negative errno code otherwise.
  */
-__syscall int uart_tx(struct device *dev, const u8_t *buf, size_t len,
-		      u32_t timeout);
-
-static inline int z_impl_uart_tx(struct device *dev, const u8_t *buf,
-				 size_t len, u32_t timeout)
+static inline int uart_tx(struct device *dev,
+			  const u8_t *buf,
+			  size_t len,
+			  u32_t timeout)
 
 {
 	const struct uart_driver_api *api =
@@ -488,9 +488,7 @@ static inline int z_impl_uart_tx(struct device *dev, const u8_t *buf,
  * @retval -EFAULT There is no active transmission.
  * @retval 0	   If successful, negative errno code otherwise.
  */
-__syscall int uart_tx_abort(struct device *dev);
-
-static inline int z_impl_uart_tx_abort(struct device *dev)
+static inline int uart_tx_abort(struct device *dev)
 {
 	const struct uart_driver_api *api =
 			(const struct uart_driver_api *)dev->driver_api;
@@ -514,11 +512,8 @@ static inline int z_impl_uart_tx_abort(struct device *dev)
  * @retval 0	  If successful, negative errno code otherwise.
  *
  */
-__syscall int uart_rx_enable(struct device *dev, u8_t *buf, size_t len,
-			     u32_t timeout);
-
-static inline int z_impl_uart_rx_enable(struct device *dev, u8_t *buf,
-					size_t len, u32_t timeout)
+static inline int uart_rx_enable(struct device *dev, u8_t *buf, size_t len,
+				 u32_t timeout)
 {
 	const struct uart_driver_api *api =
 				(const struct uart_driver_api *)dev->driver_api;
@@ -563,9 +558,7 @@ static inline int uart_rx_buf_rsp(struct device *dev, u8_t *buf, size_t len)
  * @retval -EFAULT There is no active reception.
  * @retval 0	   If successful, negative errno code otherwise.
  */
-__syscall int uart_rx_disable(struct device *dev);
-
-static inline int z_impl_uart_rx_disable(struct device *dev)
+static inline int uart_rx_disable(struct device *dev)
 {
 	const struct uart_driver_api *api =
 			(const struct uart_driver_api *)dev->driver_api;

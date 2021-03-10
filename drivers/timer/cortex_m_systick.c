@@ -13,8 +13,15 @@ void z_ExcExit(void);
 #define COUNTER_MAX 0x00ffffff
 #define TIMER_STOPPED 0xff000000
 
+#if defined(CONFIG_TIMER_READS_ITS_FREQUENCY_AT_RUNTIME)
+extern int z_clock_hw_cycles_per_sec;
+#define CYC_PER_TICK (SystemCoreClock	\
+		      / CONFIG_SYS_CLOCK_TICKS_PER_SEC)
+#else
 #define CYC_PER_TICK (CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC	\
 		      / CONFIG_SYS_CLOCK_TICKS_PER_SEC)
+#endif /* CONFIG_TIMER_READS_ITS_FREQUENCY_AT_RUNTIME */
+
 #define MAX_TICKS ((COUNTER_MAX / CYC_PER_TICK) - 1)
 #define MAX_CYCLES (MAX_TICKS * CYC_PER_TICK)
 
@@ -101,6 +108,11 @@ void z_clock_isr(void *arg)
 
 int z_clock_driver_init(struct device *device)
 {
+#if defined(CONFIG_TIMER_READS_ITS_FREQUENCY_AT_RUNTIME)
+	SystemCoreClockUpdate();
+	z_clock_hw_cycles_per_sec = SystemCoreClock;
+#endif
+
 	NVIC_SetPriority(SysTick_IRQn, _IRQ_PRIO_OFFSET);
 	last_load = CYC_PER_TICK - 1;
 	overflow_cyc = 0U;
@@ -142,6 +154,25 @@ void z_clock_set_timeout(s32_t ticks, bool idle)
 	delay = delay + (cycle_count - announced_cycles);
 	delay = ((delay + CYC_PER_TICK - 1) / CYC_PER_TICK) * CYC_PER_TICK;
 	last_load = delay - (cycle_count - announced_cycles);
+
+	overflow_cyc = 0U;
+	SysTick->LOAD = last_load - 1;
+	SysTick->VAL = 0; /* resets timer to last_load */
+
+	k_spin_unlock(&lock, key);
+#endif
+}
+
+void z_clock_update(void)
+{
+#if defined(CONFIG_TIMER_READS_ITS_FREQUENCY_AT_RUNTIME)
+	k_spinlock_key_t key = k_spin_lock(&lock);
+
+	cycle_count += elapsed();
+	SystemCoreClockUpdate();
+	z_clock_hw_cycles_per_sec = SystemCoreClock;
+
+	last_load = CYC_PER_TICK - 1;
 
 	overflow_cyc = 0U;
 	SysTick->LOAD = last_load - 1;

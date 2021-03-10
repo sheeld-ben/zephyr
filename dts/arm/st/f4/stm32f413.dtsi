@@ -116,6 +116,7 @@
 			interrupts = <39 0>;
 			status = "disabled";
 			label = "UART_3";
+			dma-channels = <4 3 4 1>;
 		};
 
 		uart4: serial@40004c00 {
@@ -125,6 +126,7 @@
 			interrupts = <52 0>;
 			status = "disabled";
 			label = "UART_4";
+			dma-channels = <4 4 4 2>;
 		};
 
 		uart5: serial@40005000 {
@@ -134,6 +136,7 @@
 			interrupts = <53 0>;
 			status = "disabled";
 			label = "UART_5";
+			dma-channels = <8 7 4 0>;
 		};
 
 		uart7: serial@40007800 {
@@ -143,6 +146,7 @@
 			interrupts = <82 0>;
 			status = "disabled";
 			label = "UART_7";
+			dma-channels = <5 1 5 3>;
 		};
 
 		uart8: serial@40007c00 {
@@ -152,6 +156,7 @@
 			interrupts = <83 0>;
 			status = "disabled";
 			label = "UART_8";
+			dma-channels = <5 6 5 0>;
 		};
 
 		timers8: timers@40010400 {
@@ -177,6 +182,7 @@
 			interrupts = <88 0>;
 			status = "disabled";
 			label = "UART_9";
+			dma-channels = <1 0 0 7>;
 		};
 
 		uart10: serial@40011c00 {
@@ -186,10 +192,59 @@
 			interrupts = <89 0>;
 			status = "disabled";
 			label = "UART_10";
+			dma-channels = <9 5 9 3>;
 		};
 
 		usbotg_fs: usb@50000000 {
 			num-bidir-endpoints = <6>;
+		};
+
+		can1: can@40006400 {
+			compatible = "st,stm32-can";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x40006400 0x400>;
+			interrupts = <19 0>, <20 0>, <21 0>, <22 0>;
+			interrupt-names = "TX", "RX0", "RX1", "SCE";
+			clocks = <&rcc STM32_CLOCK_BUS_APB1 0x02000000>;
+			status = "disabled";
+			label = "CAN_1";
+			bus-speed = <250000>;
+			sjw = <1>;
+			prop_seg_phase_seg1 = <5>;
+			phase_seg2 = <6>;
+		};
+
+		can2: can@40006800 {
+			compatible = "st,stm32-can";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x40006800 0x400>;
+			interrupts = <63 0>, <64 0>, <65 0>, <66 0>;
+			interrupt-names = "TX", "RX0", "RX1", "SCE";
+			clocks = <&rcc STM32_CLOCK_BUS_APB1 0x04000000>;
+			status = "disabled";
+			label = "CAN_2";
+			bus-speed = <250000>;
+			sjw = <1>;
+			prop_seg_phase_seg1 = <5>;
+			phase_seg2 = <6>;
+		};
+
+		can3: can@40006c00 {
+			compatible = "st,stm32-can";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x40006c00 0x400>;
+			interrupts = <74 0>, <75 0>, <76 0>, <77 0>;
+			interrupt-names = "TX", "RX0", "RX1", "SCE";
+			clocks = <&rcc STM32_CLOCK_BUS_APB1 0x08000000>;
+			status = "disabled";
+			label = "CAN_3";
+			bus-speed = <250000>;
+			sjw = <1>;
+			prop_seg_phase_seg1 = <5>;
+			phase_seg2 = <6>;
 		};
 	};
 };
